@@ -84,6 +84,7 @@
         .list-item-grid.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
         .list-header { background: #f0fdfa; border: 1px solid #99f6e4; padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
         .list-break { background: #fef2f2; border: 1px solid #fecaca; padding: 8px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: center; align-items: center; gap: 10px; color: #dc2626; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; }
+        .list-line { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
 
         /* --- PREVIEW STAGE --- */
         .stage {
@@ -110,26 +111,84 @@
 
         /* --- PRINT STYLES --- */
         
-        /* Fixed Header Area (Logo & Shop Addr) */
-        .p-header { display: flex; justify-content: space-between; align-items: center; height: auto; padding-bottom: 10px; border-bottom: 2px solid var(--brand-color); margin-bottom: 5px; flex-shrink: 0; }
-        .ph-logo img { height: 60px; }
-        .ph-text { text-align: center; flex: 1; }
-        .ph-text h1 { margin: 0; font-family: 'Arial Narrow', sans-serif; font-size: 24pt; font-weight: 900; color: var(--brand-color); text-transform: uppercase; letter-spacing: 1px; }
-        .ph-contact { text-align: right; font-weight: 700; font-size: 11pt; color: var(--brand-color); }
+        /* HEADER GRID: 3 Columns [ Logo | Center Text | Empty ] */
+        .p-header { 
+            display: grid;
+            grid-template-columns: 150px 1fr 150px; 
+            align-items: center; 
+            height: 140px; /* Fixed height to accommodate everything */
+            border-bottom: 2px solid var(--brand-color); 
+            margin-bottom: 5px; 
+            flex-shrink: 0; 
+        }
+        
+        .ph-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+        }
+        .ph-logo img { 
+            height: 120px; 
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        
+        /* CENTER COLUMN: Holds Name, Quote, and Cell */
+        .ph-text { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center;
+        }
+        
+        .ph-text h1 { 
+            margin: 0; 
+            font-family: 'Arial Narrow', sans-serif; 
+            font-size: 26pt; 
+            font-weight: 900; 
+            color: var(--brand-color); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            line-height: 1; 
+            white-space: nowrap; 
+        }
+        
+        .ph-quote {
+            margin: 5px 0 0 0;
+            font-size: 9pt;
+            font-weight: 700;
+            color: var(--brand-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+        }
+
+        /* MOVED TO CENTER */
+        .ph-contact { 
+            margin-top: 8px;
+            text-align: center; 
+            font-weight: 800; 
+            font-size: 12pt; 
+            color: var(--brand-color);
+        }
+
         .p-shop-addr { text-align: center; font-size: 10pt; font-weight: 600; margin-bottom: 15px; color: #333; }
 
-        /* FIXED HEIGHT INFO GRID - Prevents Jumping */
+        /* FIXED HEIGHT INFO GRID */
         .info-grid { 
             display: flex; 
             gap: 10px; 
             margin-bottom: 20px; 
             flex-shrink: 0; 
-            height: 380px; /* Fixed Height for Stability */
+            height: 380px;
             border-bottom: 2px solid var(--brand-color);
             padding-bottom: 10px;
         }
 
-        /* Left Side: Addresses (Stable Width) */
         .ig-left { 
             width: 55%; 
             display: flex; 
@@ -138,13 +197,12 @@
             justify-content: flex-start; 
         }
 
-        /* Right Side: Image (Stable Width) */
         .ig-right { 
             width: 45%; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: space-between; /* Space between image and text */
+            justify-content: space-between; 
             border-left: 2px solid #e5e7eb;
             padding-left: 10px;
         }
@@ -153,10 +211,9 @@
         .addr-content { font-size: 11pt; line-height: 1.4; font-weight: 500; color: #1f2937; }
         .addr-content strong { display: block; font-size: 13pt; font-weight: 800; color: var(--brand-color); }
         
-        /* Image Logic */
         .img-container {
             width: 100%;
-            height: 320px; /* Fixed height for image area */
+            height: 320px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -165,7 +222,7 @@
         .img-container img { 
             width: 100%; 
             height: 100%; 
-            object-fit: contain; /* PERFECT FIT */
+            object-fit: contain;
         }
         
         .kit-name { 
@@ -174,7 +231,7 @@
             text-align: center; 
             text-transform: uppercase; 
             color: var(--brand-color); 
-            margin-top: auto; /* Pushes to bottom of container */
+            margin-top: auto; 
             width: 100%;
         }
 
@@ -182,7 +239,6 @@
         .table-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .p-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         
-        /* HEADER IS ALWAYS CENTERED */
         .p-table th { 
             border: 2px solid var(--brand-color); 
             padding: 8px; 
@@ -190,10 +246,9 @@
             font-weight: 800; 
             color: var(--brand-color); 
             text-transform: uppercase; 
-            text-align: center !important; /* Force Center */
+            text-align: center !important; 
         }
 
-        /* BODY IS LEFT ALIGNED (except SNo/Qty) */
         .p-table td { 
             border: 2px solid var(--brand-color); 
             padding: 6px 8px; 
@@ -201,24 +256,21 @@
             font-weight: 600; 
             color: var(--brand-color); 
             vertical-align: top;
-            text-align: left; /* Default Left */
+            text-align: left; 
         }
 
-        /* Specific Alignment Classes */
         .txt-center { text-align: center !important; }
         .txt-left { text-align: left !important; }
 
-        /* Clean Mode */
         .p-table.clean th { border: none; border-bottom: 2px solid var(--brand-color); }
         .p-table.clean td { border: none; }
         .p-table.boxed th { background: #f3f4f6; }
 
-        /* Lines & Headers */
         .row-line td { border-bottom: 2px solid var(--brand-color) !important; height: 2px; padding: 0 !important; }
         .p-table.boxed .row-line td { border-left: 2px solid var(--brand-color); border-right: 2px solid var(--brand-color); }
         
         .row-header td { 
-            text-align: center !important; /* Section Headers Centered */
+            text-align: center !important; 
             font-weight: 800; 
             background: #f9fafb; 
             padding: 8px !important; 
@@ -529,12 +581,16 @@
                 // PAGE 1 HEADER
                 const imageSrc = productImage ? productImage : ''; // Image source or empty
                 
+                // HEADER STRUCTURE CHANGED TO MOVE CELL CENTER
                 contentDiv.innerHTML = `
                     <div class="p-header">
-                        <div class="ph-logo"><img src="https://i.postimg.cc/G2Lj0VGY/Chat-GPT-Image-Jan-1-2026-01-32-19-PM.png"></div>
-                        <div class="ph-text"><h1>UK WATER SOLUTIONs</h1></div>
-                        <div class="ph-contact">Cell: ${document.getElementById('in_cell').value}</div>
-                    </div>
+                        <div class="ph-logo"><img src="https://i.postimg.cc/9MT2tGhX/Chat-GPT-Image-Jan-29-2026-06-24-03-PM.png"></div>
+                        <div class="ph-text">
+                            <h1>UK WATER SOLUTIONS</h1>
+                            <div class="ph-quote">One Solution For All Your Need's</div>
+                            <div class="ph-contact">Cell: ${document.getElementById('in_cell').value}</div>
+                        </div>
+                        <div></div> </div>
                     <div class="p-shop-addr">${document.getElementById('in_shop').value}</div>
                     
                     <div class="info-grid">
