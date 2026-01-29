@@ -8,17 +8,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Arial+Narrow:wght@700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-color: #525659;
-            --panel-bg: #ffffff;
+            --bg-body: #eef2f6;
+            --sidebar-width: 400px;
             --primary: #2563eb;
-            --border: #e5e7eb;
+            --primary-dark: #1e40af;
             --brand-color: #10265c;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
             
-            /* A4 Size @ 96 DPI */
+            /* A4 Size */
             --a4-width: 794px;
             --a4-height: 1123px;
         }
@@ -28,75 +32,153 @@
         body {
             margin: 0; height: 100vh; display: flex;
             font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
+            background: var(--bg-body);
+            color: var(--text-main);
             overflow: hidden;
         }
 
-        /* --- SIDEBAR EDITOR --- */
+        /* --- PROFESSIONAL LEFT PANEL --- */
         .sidebar {
-            width: 420px; background: var(--panel-bg); 
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; z-index: 10;
-            flex-shrink: 0;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            width: var(--sidebar-width); 
+            background: #ffffff; 
+            border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; 
+            z-index: 20; flex-shrink: 0;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.05);
+            height: 100%;
         }
 
-        .header { padding: 15px; border-bottom: 1px solid var(--border); background: #f8fafc; }
-        .header h3 { margin: 0; color: #1e293b; font-size: 1.1rem; }
-        .content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
-
-        .card {
-            background: #fff; border: 1px solid var(--border);
-            border-radius: 8px; padding: 12px; margin-bottom: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        /* 1. Sidebar Header */
+        .sidebar-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: #fff;
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .card-title {
-            font-size: 0.7rem; font-weight: 700; color: #64748b;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            margin-bottom: 10px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px;
+        .app-title {
+            font-size: 1.1rem; font-weight: 700; color: var(--brand-color);
+            display: flex; align-items: center; gap: 10px;
         }
 
+        /* 2. Scrollable Content */
+        .sidebar-content {
+            flex: 1; overflow-y: auto; 
+            padding: 20px;
+            background: #f8fafc; /* Subtle contrast for content area */
+            scrollbar-width: thin;
+        }
+
+        /* 3. Fixed Footer (Download Button) */
+        .sidebar-footer {
+            padding: 20px;
+            background: #fff;
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        /* --- UI COMPONENTS --- */
+        
+        /* Sections */
+        .section-label {
+            font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px;
+            margin: 20px 0 10px 0; display: block;
+        }
+        .section-label:first-child { margin-top: 0; }
+
+        /* Cards */
+        .panel-card {
+            background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 8px; padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: border-color 0.2s;
+        }
+        .panel-card:focus-within { border-color: var(--primary); }
+
+        /* Inputs */
         input, textarea {
-            width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1;
-            border-radius: 6px; font-family: inherit; font-size: 0.85rem;
-            margin-bottom: 8px; display: block;
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #e2e8f0; border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 0.9rem;
+            background: #f8fafc; color: var(--text-main);
+            margin-bottom: 8px; transition: all 0.2s;
         }
-        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+        input:focus, textarea:focus {
+            background: #fff; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        
+        /* Input Label (Mini) */
+        .input-hint { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; display: block; font-weight: 600; }
 
-        .btn-row { display: flex; gap: 8px; margin-top: 5px; }
+        /* Buttons */
         .btn {
             border: none; border-radius: 6px; font-weight: 600; cursor: pointer;
-            padding: 8px 12px; flex: 1; display: flex; justify-content: center; align-items: center;
-            font-size: 0.8rem; background: #f1f5f9; color: #475569; transition: all 0.2s;
+            padding: 10px 16px; font-size: 0.85rem;
+            display: inline-flex; justify-content: center; align-items: center; gap: 6px;
+            transition: all 0.2s; width: 100%;
         }
-        .btn:hover { background: #e2e8f0; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-dark { background: #334155; color: white; }
-        .btn-danger { background: #fee2e2; color: #ef4444; width: auto; flex: none; }
+        .btn-row { display: flex; gap: 8px; margin-top: 8px; }
 
-        .chk-group { display: flex; flex-direction: column; gap: 8px; }
-        .chk-label { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #334155; cursor: pointer; }
-        .chk-label input { width: auto; margin: 0; }
+        .btn-primary { 
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white; box-shadow: 0 2px 4px rgba(37,99,235,0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 4px 8px rgba(37,99,235,0.4); transform: translateY(-1px); }
 
-        /* Drag & Drop Styles */
-        .drag-handle { cursor: grab; color: #94a3b8; padding: 0 5px; font-size: 1.2rem; }
-        .list-item-grid { display: grid; gap: 5px; align-items: center; margin-bottom: 6px; background: #fff; border: 1px solid #f1f5f9; padding: 4px; border-radius: 6px; }
-        .list-item-grid.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
-        .list-header { background: #f0fdfa; border: 1px solid #99f6e4; padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
-        .list-break { background: #fef2f2; border: 1px solid #fecaca; padding: 8px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: center; align-items: center; gap: 10px; color: #dc2626; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; }
-        .list-line { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+        .btn-secondary { background: #eef2f6; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-secondary:hover { background: #e2e8f0; color: #1e293b; }
 
-        /* --- PREVIEW STAGE --- */
+        .btn-danger { background: #fee2e2; color: #dc2626; width: auto; }
+        .btn-danger:hover { background: #fecaca; }
+
+        .btn-download-lg {
+            width: 100%; padding: 16px; font-size: 1rem; letter-spacing: 0.5px;
+            background: var(--brand-color); color: white;
+            border-radius: 8px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            box-shadow: 0 4px 12px rgba(16, 38, 92, 0.25);
+        }
+        .btn-download-lg:hover { background: #0b1a40; transform: translateY(-2px); }
+
+        /* Toggles */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+        .toggle-label { font-size: 0.85rem; color: var(--text-main); }
+        input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--brand-color); }
+
+        /* Item List */
+        .item-row { 
+            display: grid; grid-template-columns: 20px 1fr 60px 24px; gap: 8px; 
+            align-items: center; background: #fff; border: 1px solid #e2e8f0;
+            padding: 8px; border-radius: 6px; margin-bottom: 6px;
+        }
+        .item-row:hover { border-color: #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .drag-handle { color: #cbd5e1; cursor: grab; display: flex; justify-content: center; }
+        
+        /* Highlight Total */
+        .total-card {
+            background: #ecfdf5; border: 1px solid #a7f3d0;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .total-card input {
+            background: transparent; border: none; font-size: 1.2rem; font-weight: 800; color: #047857; padding: 0; margin: 0;
+            box-shadow: none;
+        }
+
+        /* --- PREVIEW AREA (Right Side) --- */
         .stage {
             flex: 1; overflow-y: auto; padding: 40px;
             display: flex; flex-direction: column; align-items: center; gap: 40px;
-            background-image: radial-gradient(#636669 1px, transparent 1px); background-size: 20px 20px;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px); 
+            background-size: 20px 20px;
         }
 
-        /* --- A4 SHEET --- */
+        /* --- PDF SHEET STYLES (EXACTLY AS REQUESTED) --- */
         .sheet {
             width: var(--a4-width); height: var(--a4-height);
-            background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             position: relative; display: flex; flex-direction: column;
             overflow: hidden; flex-shrink: 0;
         }
@@ -109,173 +191,68 @@
         }
         .sheet-content.noborder { border: none; padding: 20px; }
 
-        /* --- PRINT STYLES --- */
-        
-        /* HEADER GRID: 3 Columns [ Logo | Center Text | Empty ] */
+        /* Header Grid: [Logo | Text | Empty] */
         .p-header { 
             display: grid;
             grid-template-columns: 150px 1fr 150px; 
             align-items: center; 
-            height: 140px; /* Fixed height to accommodate everything */
+            height: 140px; 
             border-bottom: 2px solid var(--brand-color); 
             margin-bottom: 5px; 
             flex-shrink: 0; 
         }
         
-        .ph-logo {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            height: 100%;
-        }
-        .ph-logo img { 
-            height: 120px; 
-            width: auto;
-            max-width: 100%;
-            object-fit: contain;
-        }
+        .ph-logo { display: flex; align-items: center; justify-content: flex-start; height: 100%; }
+        .ph-logo img { height: 120px; width: auto; max-width: 100%; object-fit: contain; }
         
-        /* CENTER COLUMN: Holds Name, Quote, and Cell */
-        .ph-text { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            text-align: center;
-        }
-        
+        .ph-text { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .ph-text h1 { 
-            margin: 0; 
-            font-family: 'Arial Narrow', sans-serif; 
-            font-size: 26pt; 
-            font-weight: 900; 
-            color: var(--brand-color); 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            line-height: 1; 
+            margin: 0; font-family: 'Arial Narrow', sans-serif; font-size: 26pt; font-weight: 900; 
+            color: var(--brand-color); text-transform: uppercase; letter-spacing: 1px; line-height: 1; 
             white-space: nowrap; 
         }
         
         .ph-quote {
-            margin: 5px 0 0 0;
-            font-size: 9pt;
-            font-weight: 700;
-            color: var(--brand-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: 'Inter', sans-serif;
-            text-align: center;
+            margin: 5px 0 0 0; font-size: 9pt; font-weight: 700; 
+            color: var(--brand-color); text-transform: uppercase; letter-spacing: 2px; 
+            font-family: 'Inter', sans-serif; text-align: center;
         }
 
-        /* MOVED TO CENTER */
         .ph-contact { 
-            margin-top: 8px;
-            text-align: center; 
-            font-weight: 800; 
-            font-size: 12pt; 
-            color: var(--brand-color);
+            margin-top: 8px; text-align: center; font-weight: 800; font-size: 12pt; color: var(--brand-color);
         }
 
         .p-shop-addr { text-align: center; font-size: 10pt; font-weight: 600; margin-bottom: 15px; color: #333; }
 
-        /* FIXED HEIGHT INFO GRID */
+        /* Info Grid */
         .info-grid { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 20px; 
-            flex-shrink: 0; 
-            height: 380px;
-            border-bottom: 2px solid var(--brand-color);
-            padding-bottom: 10px;
+            display: flex; gap: 10px; margin-bottom: 20px; flex-shrink: 0; height: 380px;
+            border-bottom: 2px solid var(--brand-color); padding-bottom: 10px;
         }
-
-        .ig-left { 
-            width: 55%; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-            justify-content: flex-start; 
-        }
-
-        .ig-right { 
-            width: 45%; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: space-between; 
-            border-left: 2px solid #e5e7eb;
-            padding-left: 10px;
-        }
+        .ig-left { width: 55%; display: flex; flex-direction: column; gap: 20px; justify-content: flex-start; }
+        .ig-right { width: 45%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; border-left: 2px solid #e5e7eb; padding-left: 10px; }
         
         .addr-box .addr-label { font-size: 10pt; font-weight: 800; color: var(--brand-color); text-transform: uppercase; margin-bottom: 3px; }
         .addr-content { font-size: 11pt; line-height: 1.4; font-weight: 500; color: #1f2937; }
         .addr-content strong { display: block; font-size: 13pt; font-weight: 800; color: var(--brand-color); }
         
-        .img-container {
-            width: 100%;
-            height: 320px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .img-container img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain;
-        }
-        
-        .kit-name { 
-            font-size: 13pt; 
-            font-weight: 800; 
-            text-align: center; 
-            text-transform: uppercase; 
-            color: var(--brand-color); 
-            margin-top: auto; 
-            width: 100%;
-        }
+        .img-container { width: 100%; height: 320px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .img-container img { width: 100%; height: 100%; object-fit: contain; }
+        .kit-name { font-size: 13pt; font-weight: 800; text-align: center; text-transform: uppercase; color: var(--brand-color); margin-top: auto; width: 100%; }
 
         /* Table */
         .table-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .p-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        
-        .p-table th { 
-            border: 2px solid var(--brand-color); 
-            padding: 8px; 
-            font-size: 11pt; 
-            font-weight: 800; 
-            color: var(--brand-color); 
-            text-transform: uppercase; 
-            text-align: center !important; 
-        }
-
-        .p-table td { 
-            border: 2px solid var(--brand-color); 
-            padding: 6px 8px; 
-            font-size: 11pt; 
-            font-weight: 600; 
-            color: var(--brand-color); 
-            vertical-align: top;
-            text-align: left; 
-        }
-
+        .p-table th { border: 2px solid var(--brand-color); padding: 8px; font-size: 11pt; font-weight: 800; color: var(--brand-color); text-transform: uppercase; text-align: center !important; }
+        .p-table td { border: 2px solid var(--brand-color); padding: 6px 8px; font-size: 11pt; font-weight: 600; color: var(--brand-color); vertical-align: top; text-align: left; }
         .txt-center { text-align: center !important; }
         .txt-left { text-align: left !important; }
-
         .p-table.clean th { border: none; border-bottom: 2px solid var(--brand-color); }
         .p-table.clean td { border: none; }
         .p-table.boxed th { background: #f3f4f6; }
-
         .row-line td { border-bottom: 2px solid var(--brand-color) !important; height: 2px; padding: 0 !important; }
         .p-table.boxed .row-line td { border-left: 2px solid var(--brand-color); border-right: 2px solid var(--brand-color); }
-        
-        .row-header td { 
-            text-align: center !important; 
-            font-weight: 800; 
-            background: #f9fafb; 
-            padding: 8px !important; 
-            letter-spacing: 1px; 
-        }
+        .row-header td { text-align: center !important; font-weight: 800; background: #f9fafb; padding: 8px !important; letter-spacing: 1px; }
         .p-table.clean .row-header td { background: transparent; text-decoration: underline; }
 
         .p-footer { margin-top: auto; padding-top: 10px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0; height: 50px; border-top: 2px solid var(--brand-color); }
@@ -291,75 +268,102 @@
 </head>
 <body>
 
-    <button onclick="document.querySelector('.sidebar').classList.toggle('active')" style="position:fixed; bottom:20px; right:20px; z-index:100; padding:15px; border-radius:50%; border:none; background:blue; color:white; font-size:24px;">✏️</button>
+    <button onclick="document.querySelector('.sidebar').classList.toggle('active')" style="position:fixed; bottom:20px; right:20px; z-index:100; padding:15px; border-radius:50%; border:none; background:var(--primary); color:white; font-size:24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">✏️</button>
 
     <aside class="sidebar">
-        <div class="header"><h3>📝 Quotation Builder</h3></div>
-        <div class="content">
-            <div class="card" style="background:#eff6ff; border-color:#93c5fd;">
-                <span class="card-title" style="color:#1e40af;">Project Files</span>
-                <div class="btn-row">
-                    <button class="btn btn-primary" onclick="saveProject()">💾 Save</button>
-                    <label class="btn btn-dark" style="margin:0; cursor:pointer;">📂 Load<input type="file" onchange="loadProject(this)" style="display:none" accept=".json"></label>
-                </div>
+        <div class="sidebar-header">
+            <div class="app-title">
+                <span class="material-icons-round" style="color:var(--primary);">assignment</span>
+                Quotation Builder
             </div>
-
-            <div class="card">
-                <span class="card-title">Display Settings</span>
-                <div class="chk-group">
-                    <label class="chk-label"><input type="checkbox" id="opt_border" checked onchange="render()"> Page Border</label>
-                    <label class="chk-label"><input type="checkbox" id="opt_grid" onchange="render()"> Table Grid Lines (Boxed)</label>
-                    <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
-                    <label class="chk-label"><input type="checkbox" id="opt_show_sno" checked onchange="updateCols()"> Show S.No Column</label>
-                    <label class="chk-label"><input type="checkbox" id="opt_show_desc" checked onchange="updateCols()"> Show Description Column</label>
-                    <label class="chk-label"><input type="checkbox" id="opt_show_qty" checked onchange="updateCols()"> Show Quantity Column</label>
-                </div>
-            </div>
-
-            <div class="card">
-                <span class="card-title">Header Information</span>
-                <input id="in_cell" value="77089 22155" oninput="render()" placeholder="Cell Number">
-                <input id="in_shop" value="Shop No. 173A7, Near Old Bus Stand, Main Road, Namakkal - 637 001." oninput="render()" placeholder="Shop Address">
-                
-                <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
-                    <label class="card-title">From</label>
-                    <input id="in_from_name" value="UK RO service center" oninput="render()">
-                    <textarea id="in_from_addr" rows="2" oninput="render()">shop no.173A7, Near Old Bus Stand&#13;&#10;Main Road, namakkal-637001</textarea>
-                </div>
-                <div style="margin-top:10px;">
-                    <label class="card-title">To</label>
-                    <input id="in_to_name" value="V.Sathyamoorthy&Co" oninput="render()">
-                    <textarea id="in_to_addr" rows="2" oninput="render()">Adm.Off: D.No.5/646A, Mullai Nagar,&#13;&#10;Trichy Road, Namakkal-637001</textarea>
-                </div>
-            </div>
-
-            <div class="card">
-                <span class="card-title">Machine / Image</span>
-                <input id="in_kit" value="MODEL - 3000 LPH SS CLASSIC" oninput="render()" placeholder="Model Name">
-                <label class="btn btn-dark" style="margin-top:5px;">
-                    📷 Upload Image
-                    <input type="file" id="in_img" accept="image/*" onchange="handleImage(event)" style="display:none">
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-secondary" onclick="saveProject()" title="Save JSON" style="width:auto; padding:8px;"><span class="material-icons-round">save</span></button>
+                <label class="btn btn-secondary" title="Load JSON" style="width:auto; padding:8px; margin:0; cursor:pointer;">
+                    <span class="material-icons-round">upload_file</span>
+                    <input type="file" onchange="loadProject(this)" style="display:none" accept=".json">
                 </label>
-                <button class="btn btn-danger" style="margin-top:5px; width:100%" onclick="clearImage()">❌ Remove Image</button>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            
+            <span class="section-label">General Info</span>
+            <div class="panel-card">
+                <span class="input-hint">Cell Number</span>
+                <input id="in_cell" value="77089 22155" oninput="render()">
+                
+                <span class="input-hint">Shop Address (Footer)</span>
+                <input id="in_shop" value="Shop No. 173A7, Near Old Bus Stand, Main Road, Namakkal - 637 001." oninput="render()">
             </div>
 
-            <div class="card">
-                <span class="card-title">Items</span>
-                <div id="item-list"></div>
-                <div class="btn-row" style="flex-wrap: wrap;">
-                    <button class="btn" onclick="addItem()">+ Item</button>
-                    <button class="btn" onclick="addHeader()">+ Header</button>
-                    <button class="btn" onclick="addLine()">- Line</button>
-                    <button class="btn btn-dark" onclick="addPageBreak()">+ New Page</button>
+            <span class="section-label">Addresses</span>
+            <div class="panel-card">
+                <span class="input-hint">FROM (Sender)</span>
+                <input id="in_from_name" value="UK RO service center" oninput="render()" placeholder="Sender Name">
+                <textarea id="in_from_addr" rows="2" oninput="render()" placeholder="Sender Address">shop no.173A7, Near Old Bus Stand&#13;&#10;Main Road, namakkal-637001</textarea>
+                
+                <div style="height:1px; background:#e2e8f0; margin:10px 0;"></div>
+
+                <span class="input-hint">TO (Client)</span>
+                <input id="in_to_name" value="V.Sathyamoorthy&Co" oninput="render()" placeholder="Client Name">
+                <textarea id="in_to_addr" rows="2" oninput="render()" placeholder="Client Address">Adm.Off: D.No.5/646A, Mullai Nagar,&#13;&#10;Trichy Road, Namakkal-637001</textarea>
+            </div>
+
+            <span class="section-label">Product Details</span>
+            <div class="panel-card">
+                <span class="input-hint">Kit / Model Name</span>
+                <input id="in_kit" value="MODEL - 3000 LPH SS CLASSIC" oninput="render()">
+                <div class="btn-row">
+                    <label class="btn btn-secondary" style="margin:0; cursor:pointer;">
+                        <span class="material-icons-round" style="font-size:16px;">image</span> Upload Image
+                        <input type="file" id="in_img" accept="image/*" onchange="handleImage(event)" style="display:none">
+                    </label>
+                    <button class="btn btn-danger" onclick="clearImage()" title="Clear"><span class="material-icons-round">close</span></button>
                 </div>
             </div>
 
-            <div class="card">
-                <span class="card-title">Total</span>
-                <input id="in_total" value="4,45,000 + GST" oninput="render()" style="font-weight:bold; color:var(--brand-color);">
+            <span class="section-label">Quotation Items</span>
+            <div class="panel-card" style="background:#f8fafc; border:none; padding:0; box-shadow:none;">
+                <div id="item-list"></div>
+                
+                <div class="btn-row" style="margin-top:10px;">
+                    <button class="btn btn-secondary" onclick="addItem()">+ Item</button>
+                    <button class="btn btn-secondary" onclick="addHeader()">+ Header</button>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-secondary" onclick="addLine()">--- Line</button>
+                    <button class="btn btn-secondary" style="color:#dc2626;" onclick="addPageBreak()">New Page</button>
+                </div>
             </div>
 
-            <button class="btn btn-primary" style="padding:15px; font-size:1rem;" onclick="downloadPDF()">⬇ Download PDF</button>
+            <span class="section-label">Total Cost</span>
+            <div class="panel-card total-card">
+                <span class="input-hint" style="color:#059669;">Grand Total Label</span>
+                <input id="in_total" value="4,45,000 + GST" oninput="render()">
+            </div>
+
+            <span class="section-label">Appearance</span>
+            <div class="panel-card">
+                <div class="toggle-row">
+                    <span class="toggle-label">Page Border</span>
+                    <input type="checkbox" id="opt_border" checked onchange="render()">
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Table Grid Lines</span>
+                    <input type="checkbox" id="opt_grid" onchange="render()">
+                </div>
+                <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
+                <div class="toggle-row"><span class="toggle-label">Show S.No</span><input type="checkbox" id="opt_show_sno" checked onchange="updateCols()"></div>
+                <div class="toggle-row"><span class="toggle-label">Show Description</span><input type="checkbox" id="opt_show_desc" checked onchange="updateCols()"></div>
+                <div class="toggle-row"><span class="toggle-label">Show Quantity</span><input type="checkbox" id="opt_show_qty" checked onchange="updateCols()"></div>
+            </div>
+
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-download-lg" onclick="downloadPDF()">
+                <span class="material-icons-round">file_download</span> Download PDF
+            </button>
         </div>
     </aside>
 
@@ -369,16 +373,14 @@
         // --- STATE ---
         let settings = {
             border: true,
-            grid: false, // Default Grid OFF
+            grid: false,
             showSNo: true,
             showDesc: true,
             showQty: true
         };
 
-        // Default Image (Empty string means no image)
         let productImage = "";
 
-        // CLEARED DATA AS REQUESTED
         let items = [
             { type: 'item', desc: "", qty: "" }
         ];
@@ -423,21 +425,27 @@
                 div.addEventListener('dragstart', handleDragStart); div.addEventListener('dragover', handleDragOver);
                 div.addEventListener('drop', handleDrop); div.addEventListener('dragend', handleDragEnd);
                 
-                const handle = `<span class="drag-handle">☰</span>`;
-                
+                const handle = `<span class="drag-handle"><span class="material-icons-round" style="font-size:16px;">drag_indicator</span></span>`;
+                div.className = 'item-row';
+
                 if(item.type === 'item') {
-                    div.className = 'list-item-grid';
-                    div.style.gridTemplateColumns = '30px 30px 1fr 60px 30px';
-                    div.innerHTML = `${handle}<span style="font-size:0.8rem; color:#666;">${i+1}</span><input value="${item.desc}" oninput="u(${i},'desc',this.value)" style="margin:0"><input value="${item.qty}" oninput="u(${i},'qty',this.value)" style="margin:0; text-align:center"><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                    div.style.gridTemplateColumns = '20px 24px 1fr 60px 24px';
+                    div.innerHTML = `${handle}<span style="font-size:0.8rem; color:#94a3b8; text-align:center;">${i+1}</span>
+                    <input value="${item.desc}" oninput="u(${i},'desc',this.value)" style="margin:0" placeholder="Description">
+                    <input value="${item.qty}" oninput="u(${i},'qty',this.value)" style="margin:0; text-align:center" placeholder="Qty">
+                    <button class="btn btn-danger" style="padding:4px;" onclick="d(${i})">×</button>`;
                 } else if(item.type === 'header') {
-                    div.className = 'list-header';
-                    div.innerHTML = `${handle}<b>H</b><input value="${item.desc}" oninput="u(${i},'desc',this.value)" style="margin:0"><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                    div.style.background = '#f0fdfa'; div.style.borderColor = '#ccfbf1';
+                    div.style.gridTemplateColumns = '20px 24px 1fr 24px';
+                    div.innerHTML = `${handle}<b>H</b><input value="${item.desc}" oninput="u(${i},'desc',this.value)" style="margin:0; font-weight:bold;"><button class="btn btn-danger" style="padding:4px;" onclick="d(${i})">×</button>`;
                 } else if(item.type === 'break') {
-                    div.className = 'list-break';
-                    div.innerHTML = `${handle}<span>--- NEW PAGE ---</span><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                    div.style.background = '#fff1f2'; div.style.borderColor = '#ffe4e6';
+                    div.style.gridTemplateColumns = '20px 1fr 24px';
+                    div.innerHTML = `${handle}<span style="color:#e11d48; font-weight:bold; font-size:0.8rem; text-align:center;">--- PAGE BREAK ---</span><button class="btn btn-danger" style="padding:4px;" onclick="d(${i})">×</button>`;
                 } else {
-                    div.className = 'list-line';
-                    div.innerHTML = `${handle}<span>--- Line ---</span><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                    div.style.background = '#f1f5f9';
+                    div.style.gridTemplateColumns = '20px 1fr 24px';
+                    div.innerHTML = `${handle}<span style="font-size:0.8rem; color:#64748b; text-align:center;">--- Empty Line ---</span><button class="btn btn-danger" style="padding:4px;" onclick="d(${i})">×</button>`;
                 }
                 list.appendChild(div);
             });
@@ -446,7 +454,7 @@
         function u(i,k,v){ items[i][k]=v; render(); }
         function d(i){ items.splice(i,1); renderEditor(); render(); }
         function addItem(){ items.push({type:'item',desc:'',qty:''}); renderEditor(); render(); }
-        function addHeader(){ items.push({type:'header',desc:'SECTION'}); renderEditor(); render(); }
+        function addHeader(){ items.push({type:'header',desc:'SECTION HEADER'}); renderEditor(); render(); }
         function addLine(){ items.push({type:'line'}); renderEditor(); render(); }
         function addPageBreak(){ items.push({type:'break'}); renderEditor(); render(); }
 
@@ -463,7 +471,6 @@
             let currentPage = createPage(pageNum);
             preview.appendChild(currentPage.dom);
 
-            // Create Table Header Config
             const createTableHeader = () => {
                 let html = '<thead><tr>';
                 let colGroup = '<colgroup>';
@@ -474,7 +481,6 @@
                     colGroup += '<col style="width:8%">'; colCount++; 
                 }
                 if(settings.showDesc) { 
-                    // HEADER CENTERED (Requested)
                     html += `<th class="txt-center">Description</th>`; 
                     colGroup += '<col style="width:auto">'; colCount++; 
                 }
@@ -493,12 +499,10 @@
             let tbody = table.querySelector('tbody');
             currentPage.tableWrap.appendChild(table);
 
-            // PROCESS ITEMS
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
 
                 if(item.type === 'break') {
-                    // Manual Page Break
                     pageNum++;
                     currentPage = createPage(pageNum);
                     preview.appendChild(currentPage.dom);
@@ -513,15 +517,9 @@
                 if(item.type === 'item') {
                     itemCounter++;
                     let rowHtml = '';
-                    // SNo = Center
                     if(settings.showSNo) rowHtml += `<td class="txt-center">${itemCounter}.</td>`;
-                    
-                    // Desc = LEFT (Content stays left aligned as requested)
                     if(settings.showDesc) rowHtml += `<td class="txt-left">${item.desc}</td>`;
-                    
-                    // Qty = Center
                     if(settings.showQty) rowHtml += `<td class="txt-center">${item.qty}</td>`;
-                    
                     if(rowHtml === '') rowHtml = '<td></td>';
                     tr.innerHTML = rowHtml;
                 } else if(item.type === 'header') {
@@ -534,23 +532,18 @@
 
                 tbody.appendChild(tr);
 
-                // Auto Pagination on Overflow
                 if (currentPage.contentDiv.scrollHeight > currentPage.contentDiv.clientHeight) {
-                    tbody.removeChild(tr); // Remove from filled page
-                    
+                    tbody.removeChild(tr); 
                     pageNum++;
                     currentPage = createPage(pageNum);
                     preview.appendChild(currentPage.dom);
-                    
                     table = createTable(pageNum, headerData);
                     tbody = table.querySelector('tbody');
                     currentPage.tableWrap.appendChild(table);
-                    
-                    tbody.appendChild(tr); // Add to new page
+                    tbody.appendChild(tr);
                 }
             }
 
-            // FOOTER
             const totalTxt = document.getElementById('in_total').value;
             const footerHtml = `<div class="p-footer"><div class="total-lbl">Total Cost:</div><div class="total-val">${totalTxt}</div></div>`;
             const footerDiv = document.createElement('div');
@@ -578,10 +571,7 @@
             sheet.appendChild(contentDiv);
 
             if (num === 1) {
-                // PAGE 1 HEADER
-                const imageSrc = productImage ? productImage : ''; // Image source or empty
-                
-                // HEADER STRUCTURE CHANGED TO MOVE CELL CENTER
+                const imageSrc = productImage ? productImage : '';
                 contentDiv.innerHTML = `
                     <div class="p-header">
                         <div class="ph-logo"><img src="https://i.postimg.cc/9MT2tGhX/Chat-GPT-Image-Jan-29-2026-06-24-03-PM.png"></div>
@@ -590,18 +580,16 @@
                             <div class="ph-quote">One Solution For All Your Need's</div>
                             <div class="ph-contact">Cell: ${document.getElementById('in_cell').value}</div>
                         </div>
-                        <div></div> </div>
+                        <div></div>
+                    </div>
                     <div class="p-shop-addr">${document.getElementById('in_shop').value}</div>
-                    
                     <div class="info-grid">
                         <div class="ig-left">
                             <div class="addr-box"><div class="addr-label">From</div><div class="addr-content"><strong>${document.getElementById('in_from_name').value}</strong>${document.getElementById('in_from_addr').value.replace(/\n/g,'<br>')}</div></div>
                             <div class="addr-box"><div class="addr-label">To</div><div class="addr-content"><strong>${document.getElementById('in_to_name').value}</strong>${document.getElementById('in_to_addr').value.replace(/\n/g,'<br>')}</div></div>
                         </div>
                         <div class="ig-right">
-                            <div class="img-container">
-                                ${imageSrc ? `<img src="${imageSrc}">` : ''}
-                            </div>
+                            <div class="img-container">${imageSrc ? `<img src="${imageSrc}">` : ''}</div>
                             <div class="kit-name">${document.getElementById('in_kit').value}</div>
                         </div>
                     </div>`;
@@ -612,7 +600,6 @@
             const tableWrap = document.createElement('div');
             tableWrap.className = 'table-wrapper';
             contentDiv.appendChild(tableWrap);
-
             return { dom: sheet, contentDiv: contentDiv, tableWrap: tableWrap };
         }
 
@@ -620,13 +607,12 @@
             const tbl = document.createElement('table');
             tbl.className = `p-table ${settings.grid ? 'boxed' : 'clean'}`;
             let content = headerData.colGroup;
-            if (pageNum === 1) content += headerData.html; // Only Header on Page 1
+            if (pageNum === 1) content += headerData.html; 
             content += '<tbody></tbody>';
             tbl.innerHTML = content;
             return tbl;
         }
 
-        // --- IMAGES & FILES ---
         function handleImage(e) {
             const f = e.target.files[0];
             if(f) {
@@ -688,9 +674,9 @@
             const sheets = document.querySelectorAll('.sheet');
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'pt', 'a4'); 
-            const btn = document.querySelector('.btn-primary');
-            const oldText = btn.innerText;
-            btn.innerText = 'Generating PDF...';
+            const btn = document.querySelector('.btn-download-lg');
+            const oldText = btn.innerHTML;
+            btn.innerHTML = '<span class="material-icons-round">settings</span> Generating PDF...';
 
             for(let i=0; i<sheets.length; i++) {
                 if(i > 0) pdf.addPage();
@@ -699,7 +685,7 @@
                 pdf.addImage(imgData, 'JPEG', 0, 0, 595.28, 841.89);
             }
             pdf.save('Quotation.pdf');
-            btn.innerText = oldText;
+            btn.innerHTML = oldText;
         }
     </script>
 </body>
