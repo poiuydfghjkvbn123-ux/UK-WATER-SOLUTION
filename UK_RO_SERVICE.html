@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK RO Service - Quotation Builder</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Arial+Narrow:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #525659;
+            --panel-bg: #ffffff;
+            --primary: #2563eb;
+            --border: #e5e7eb;
+            --brand-color: #10265c;
+            
+            /* A4 Size @ 96 DPI */
+            --a4-width: 794px;
+            --a4-height: 1123px;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            margin: 0; height: 100vh; display: flex;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR EDITOR --- */
+        .sidebar {
+            width: 420px; background: var(--panel-bg); 
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 10;
+            flex-shrink: 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header { padding: 15px; border-bottom: 1px solid var(--border); background: #f8fafc; }
+        .header h3 { margin: 0; color: #1e293b; font-size: 1.1rem; }
+        .content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
+
+        .card {
+            background: #fff; border: 1px solid var(--border);
+            border-radius: 8px; padding: 12px; margin-bottom: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 0.7rem; font-weight: 700; color: #64748b;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 10px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px;
+        }
+
+        input, textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1;
+            border-radius: 6px; font-family: inherit; font-size: 0.85rem;
+            margin-bottom: 8px; display: block;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+        .btn-row { display: flex; gap: 8px; margin-top: 5px; }
+        .btn {
+            border: none; border-radius: 6px; font-weight: 600; cursor: pointer;
+            padding: 8px 12px; flex: 1; display: flex; justify-content: center; align-items: center;
+            font-size: 0.8rem; background: #f1f5f9; color: #475569; transition: all 0.2s;
+        }
+        .btn:hover { background: #e2e8f0; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-dark { background: #334155; color: white; }
+        .btn-danger { background: #fee2e2; color: #ef4444; width: auto; flex: none; }
+
+        .chk-group { display: flex; flex-direction: column; gap: 8px; }
+        .chk-label { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #334155; cursor: pointer; }
+        .chk-label input { width: auto; margin: 0; }
+
+        /* Drag & Drop Styles */
+        .drag-handle { cursor: grab; color: #94a3b8; padding: 0 5px; font-size: 1.2rem; }
+        .list-item-grid { display: grid; gap: 5px; align-items: center; margin-bottom: 6px; background: #fff; border: 1px solid #f1f5f9; padding: 4px; border-radius: 6px; }
+        .list-item-grid.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
+        .list-header { background: #f0fdfa; border: 1px solid #99f6e4; padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+        .list-break { background: #fef2f2; border: 1px solid #fecaca; padding: 8px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: center; align-items: center; gap: 10px; color: #dc2626; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; }
+
+        /* --- PREVIEW STAGE --- */
+        .stage {
+            flex: 1; overflow-y: auto; padding: 40px;
+            display: flex; flex-direction: column; align-items: center; gap: 40px;
+            background-image: radial-gradient(#636669 1px, transparent 1px); background-size: 20px 20px;
+        }
+
+        /* --- A4 SHEET --- */
+        .sheet {
+            width: var(--a4-width); height: var(--a4-height);
+            background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative; display: flex; flex-direction: column;
+            overflow: hidden; flex-shrink: 0;
+        }
+
+        .sheet-content {
+            border: 3px solid var(--brand-color);
+            margin: 15px; flex: 1;
+            display: flex; flex-direction: column;
+            padding: 15px; overflow: hidden;
+        }
+        .sheet-content.noborder { border: none; padding: 20px; }
+
+        /* --- PRINT STYLES --- */
+        
+        /* Fixed Header Area (Logo & Shop Addr) */
+        .p-header { display: flex; justify-content: space-between; align-items: center; height: auto; padding-bottom: 10px; border-bottom: 2px solid var(--brand-color); margin-bottom: 5px; flex-shrink: 0; }
+        .ph-logo img { height: 60px; }
+        .ph-text { text-align: center; flex: 1; }
+        .ph-text h1 { margin: 0; font-family: 'Arial Narrow', sans-serif; font-size: 24pt; font-weight: 900; color: var(--brand-color); text-transform: uppercase; letter-spacing: 1px; }
+        .ph-contact { text-align: right; font-weight: 700; font-size: 11pt; color: var(--brand-color); }
+        .p-shop-addr { text-align: center; font-size: 10pt; font-weight: 600; margin-bottom: 15px; color: #333; }
+
+        /* FIXED HEIGHT INFO GRID - Prevents Jumping */
+        .info-grid { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+            flex-shrink: 0; 
+            height: 380px; /* Fixed Height for Stability */
+            border-bottom: 2px solid var(--brand-color);
+            padding-bottom: 10px;
+        }
+
+        /* Left Side: Addresses (Stable Width) */
+        .ig-left { 
+            width: 55%; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            justify-content: flex-start; 
+        }
+
+        /* Right Side: Image (Stable Width) */
+        .ig-right { 
+            width: 45%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between; /* Space between image and text */
+            border-left: 2px solid #e5e7eb;
+            padding-left: 10px;
+        }
+        
+        .addr-box .addr-label { font-size: 10pt; font-weight: 800; color: var(--brand-color); text-transform: uppercase; margin-bottom: 3px; }
+        .addr-content { font-size: 11pt; line-height: 1.4; font-weight: 500; color: #1f2937; }
+        .addr-content strong { display: block; font-size: 13pt; font-weight: 800; color: var(--brand-color); }
+        
+        /* Image Logic */
+        .img-container {
+            width: 100%;
+            height: 320px; /* Fixed height for image area */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .img-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; /* PERFECT FIT */
+        }
+        
+        .kit-name { 
+            font-size: 13pt; 
+            font-weight: 800; 
+            text-align: center; 
+            text-transform: uppercase; 
+            color: var(--brand-color); 
+            margin-top: auto; /* Pushes to bottom of container */
+            width: 100%;
+        }
+
+        /* Table */
+        .table-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .p-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        
+        /* HEADER IS ALWAYS CENTERED */
+        .p-table th { 
+            border: 2px solid var(--brand-color); 
+            padding: 8px; 
+            font-size: 11pt; 
+            font-weight: 800; 
+            color: var(--brand-color); 
+            text-transform: uppercase; 
+            text-align: center !important; /* Force Center */
+        }
+
+        /* BODY IS LEFT ALIGNED (except SNo/Qty) */
+        .p-table td { 
+            border: 2px solid var(--brand-color); 
+            padding: 6px 8px; 
+            font-size: 11pt; 
+            font-weight: 600; 
+            color: var(--brand-color); 
+            vertical-align: top;
+            text-align: left; /* Default Left */
+        }
+
+        /* Specific Alignment Classes */
+        .txt-center { text-align: center !important; }
+        .txt-left { text-align: left !important; }
+
+        /* Clean Mode */
+        .p-table.clean th { border: none; border-bottom: 2px solid var(--brand-color); }
+        .p-table.clean td { border: none; }
+        .p-table.boxed th { background: #f3f4f6; }
+
+        /* Lines & Headers */
+        .row-line td { border-bottom: 2px solid var(--brand-color) !important; height: 2px; padding: 0 !important; }
+        .p-table.boxed .row-line td { border-left: 2px solid var(--brand-color); border-right: 2px solid var(--brand-color); }
+        
+        .row-header td { 
+            text-align: center !important; /* Section Headers Centered */
+            font-weight: 800; 
+            background: #f9fafb; 
+            padding: 8px !important; 
+            letter-spacing: 1px; 
+        }
+        .p-table.clean .row-header td { background: transparent; text-decoration: underline; }
+
+        .p-footer { margin-top: auto; padding-top: 10px; display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0; height: 50px; border-top: 2px solid var(--brand-color); }
+        .total-lbl { font-size: 14pt; font-weight: 800; color: var(--brand-color); }
+        .total-val { font-size: 16pt; font-weight: 800; margin-left: 15px; color: var(--brand-color); background: #f3f4f6; padding: 2px 10px; border-radius: 4px; }
+
+        @media screen and (max-width: 900px) {
+            .sidebar { position: fixed; width: 100%; height: 100%; display: none; }
+            .sidebar.active { display: flex; }
+            .sheet { transform: scale(0.55); margin-bottom: -500px; transform-origin: top center;}
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="document.querySelector('.sidebar').classList.toggle('active')" style="position:fixed; bottom:20px; right:20px; z-index:100; padding:15px; border-radius:50%; border:none; background:blue; color:white; font-size:24px;">✏️</button>
+
+    <aside class="sidebar">
+        <div class="header"><h3>📝 Quotation Builder</h3></div>
+        <div class="content">
+            <div class="card" style="background:#eff6ff; border-color:#93c5fd;">
+                <span class="card-title" style="color:#1e40af;">Project Files</span>
+                <div class="btn-row">
+                    <button class="btn btn-primary" onclick="saveProject()">💾 Save</button>
+                    <label class="btn btn-dark" style="margin:0; cursor:pointer;">📂 Load<input type="file" onchange="loadProject(this)" style="display:none" accept=".json"></label>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-title">Display Settings</span>
+                <div class="chk-group">
+                    <label class="chk-label"><input type="checkbox" id="opt_border" checked onchange="render()"> Page Border</label>
+                    <label class="chk-label"><input type="checkbox" id="opt_grid" onchange="render()"> Table Grid Lines (Boxed)</label>
+                    <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
+                    <label class="chk-label"><input type="checkbox" id="opt_show_sno" checked onchange="updateCols()"> Show S.No Column</label>
+                    <label class="chk-label"><input type="checkbox" id="opt_show_desc" checked onchange="updateCols()"> Show Description Column</label>
+                    <label class="chk-label"><input type="checkbox" id="opt_show_qty" checked onchange="updateCols()"> Show Quantity Column</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-title">Header Information</span>
+                <input id="in_cell" value="77089 22155" oninput="render()" placeholder="Cell Number">
+                <input id="in_shop" value="Shop No. 173A7, Near Old Bus Stand, Main Road, Namakkal - 637 001." oninput="render()" placeholder="Shop Address">
+                
+                <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
+                    <label class="card-title">From</label>
+                    <input id="in_from_name" value="UK RO service center" oninput="render()">
+                    <textarea id="in_from_addr" rows="2" oninput="render()">shop no.173A7, Near Old Bus Stand&#13;&#10;Main Road, namakkal-637001</textarea>
+                </div>
+                <div style="margin-top:10px;">
+                    <label class="card-title">To</label>
+                    <input id="in_to_name" value="V.Sathyamoorthy&Co" oninput="render()">
+                    <textarea id="in_to_addr" rows="2" oninput="render()">Adm.Off: D.No.5/646A, Mullai Nagar,&#13;&#10;Trichy Road, Namakkal-637001</textarea>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-title">Machine / Image</span>
+                <input id="in_kit" value="MODEL - 3000 LPH SS CLASSIC" oninput="render()" placeholder="Model Name">
+                <label class="btn btn-dark" style="margin-top:5px;">
+                    📷 Upload Image
+                    <input type="file" id="in_img" accept="image/*" onchange="handleImage(event)" style="display:none">
+                </label>
+                <button class="btn btn-danger" style="margin-top:5px; width:100%" onclick="clearImage()">❌ Remove Image</button>
+            </div>
+
+            <div class="card">
+                <span class="card-title">Items</span>
+                <div id="item-list"></div>
+                <div class="btn-row" style="flex-wrap: wrap;">
+                    <button class="btn" onclick="addItem()">+ Item</button>
+                    <button class="btn" onclick="addHeader()">+ Header</button>
+                    <button class="btn" onclick="addLine()">- Line</button>
+                    <button class="btn btn-dark" onclick="addPageBreak()">+ New Page</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-title">Total</span>
+                <input id="in_total" value="4,45,000 + GST" oninput="render()" style="font-weight:bold; color:var(--brand-color);">
+            </div>
+
+            <button class="btn btn-primary" style="padding:15px; font-size:1rem;" onclick="downloadPDF()">⬇ Download PDF</button>
+        </div>
+    </aside>
+
+    <main class="stage" id="previewArea"></main>
+
+    <script>
+        // --- STATE ---
+        let settings = {
+            border: true,
+            grid: false, // Default Grid OFF
+            showSNo: true,
+            showDesc: true,
+            showQty: true
+        };
+
+        // Default Image (Empty string means no image)
+        let productImage = "";
+
+        // CLEARED DATA AS REQUESTED
+        let items = [
+            { type: 'item', desc: "", qty: "" }
+        ];
+
+        window.onload = () => { renderEditor(); render(); };
+
+        // --- DRAG & DROP ---
+        let dragSrcIndex = null;
+        function handleDragStart(e) { dragSrcIndex = Number(e.target.dataset.index); e.target.classList.add('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+        function handleDrop(e) {
+            e.stopPropagation();
+            const target = e.target.closest('[draggable="true"]');
+            if (dragSrcIndex !== null && target) {
+                const dropIndex = Number(target.dataset.index);
+                if (dragSrcIndex !== dropIndex) {
+                    const item = items.splice(dragSrcIndex, 1)[0];
+                    items.splice(dropIndex, 0, item);
+                    renderEditor(); render();
+                }
+            }
+            return false;
+        }
+        function handleDragEnd(e) { e.target.classList.remove('dragging'); }
+
+        // --- UPDATE FUNCTIONS ---
+        function updateCols() {
+            settings.showSNo = document.getElementById('opt_show_sno').checked;
+            settings.showDesc = document.getElementById('opt_show_desc').checked;
+            settings.showQty = document.getElementById('opt_show_qty').checked;
+            renderEditor(); render();
+        }
+
+        // --- EDITOR ---
+        function renderEditor() {
+            const list = document.getElementById('item-list');
+            list.innerHTML = '';
+            
+            items.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.draggable = true; div.dataset.index = i;
+                div.addEventListener('dragstart', handleDragStart); div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('drop', handleDrop); div.addEventListener('dragend', handleDragEnd);
+                
+                const handle = `<span class="drag-handle">☰</span>`;
+                
+                if(item.type === 'item') {
+                    div.className = 'list-item-grid';
+                    div.style.gridTemplateColumns = '30px 30px 1fr 60px 30px';
+                    div.innerHTML = `${handle}<span style="font-size:0.8rem; color:#666;">${i+1}</span><input value="${item.desc}" oninput="u(${i},'desc',this.value)" style="margin:0"><input value="${item.qty}" oninput="u(${i},'qty',this.value)" style="margin:0; text-align:center"><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                } else if(item.type === 'header') {
+                    div.className = 'list-header';
+                    div.innerHTML = `${handle}<b>H</b><input value="${item.desc}" oninput="u(${i},'desc',this.value)" style="margin:0"><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                } else if(item.type === 'break') {
+                    div.className = 'list-break';
+                    div.innerHTML = `${handle}<span>--- NEW PAGE ---</span><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                } else {
+                    div.className = 'list-line';
+                    div.innerHTML = `${handle}<span>--- Line ---</span><button class="btn btn-danger" onclick="d(${i})">×</button>`;
+                }
+                list.appendChild(div);
+            });
+        }
+
+        function u(i,k,v){ items[i][k]=v; render(); }
+        function d(i){ items.splice(i,1); renderEditor(); render(); }
+        function addItem(){ items.push({type:'item',desc:'',qty:''}); renderEditor(); render(); }
+        function addHeader(){ items.push({type:'header',desc:'SECTION'}); renderEditor(); render(); }
+        function addLine(){ items.push({type:'line'}); renderEditor(); render(); }
+        function addPageBreak(){ items.push({type:'break'}); renderEditor(); render(); }
+
+        // --- RENDER LOGIC ---
+        function render() {
+            const preview = document.getElementById('previewArea');
+            preview.innerHTML = '';
+
+            settings.border = document.getElementById('opt_border').checked;
+            settings.grid = document.getElementById('opt_grid').checked;
+
+            let pageNum = 1;
+            let itemCounter = 0;
+            let currentPage = createPage(pageNum);
+            preview.appendChild(currentPage.dom);
+
+            // Create Table Header Config
+            const createTableHeader = () => {
+                let html = '<thead><tr>';
+                let colGroup = '<colgroup>';
+                let colCount = 0;
+                
+                if(settings.showSNo) { 
+                    html += '<th class="txt-center" style="width:8%;">SNo</th>'; 
+                    colGroup += '<col style="width:8%">'; colCount++; 
+                }
+                if(settings.showDesc) { 
+                    // HEADER CENTERED (Requested)
+                    html += `<th class="txt-center">Description</th>`; 
+                    colGroup += '<col style="width:auto">'; colCount++; 
+                }
+                if(settings.showQty) { 
+                    html += '<th class="txt-center" style="width:15%;">Quantity</th>'; 
+                    colGroup += '<col style="width:15%">'; colCount++; 
+                }
+                
+                if(colCount === 0) { html += '<th></th>'; colCount=1; }
+                html += '</tr></thead>'; colGroup += '</colgroup>';
+                return { html, colGroup, colCount };
+            };
+            
+            const headerData = createTableHeader();
+            let table = createTable(pageNum, headerData);
+            let tbody = table.querySelector('tbody');
+            currentPage.tableWrap.appendChild(table);
+
+            // PROCESS ITEMS
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+
+                if(item.type === 'break') {
+                    // Manual Page Break
+                    pageNum++;
+                    currentPage = createPage(pageNum);
+                    preview.appendChild(currentPage.dom);
+                    table = createTable(pageNum, headerData);
+                    tbody = table.querySelector('tbody');
+                    currentPage.tableWrap.appendChild(table);
+                    continue; 
+                }
+
+                const tr = document.createElement('tr');
+                
+                if(item.type === 'item') {
+                    itemCounter++;
+                    let rowHtml = '';
+                    // SNo = Center
+                    if(settings.showSNo) rowHtml += `<td class="txt-center">${itemCounter}.</td>`;
+                    
+                    // Desc = LEFT (Content stays left aligned as requested)
+                    if(settings.showDesc) rowHtml += `<td class="txt-left">${item.desc}</td>`;
+                    
+                    // Qty = Center
+                    if(settings.showQty) rowHtml += `<td class="txt-center">${item.qty}</td>`;
+                    
+                    if(rowHtml === '') rowHtml = '<td></td>';
+                    tr.innerHTML = rowHtml;
+                } else if(item.type === 'header') {
+                    tr.className = 'row-header';
+                    tr.innerHTML = `<td colspan="${headerData.colCount}">${item.desc}</td>`;
+                } else {
+                    tr.className = 'row-line';
+                    tr.innerHTML = `<td colspan="${headerData.colCount}"></td>`;
+                }
+
+                tbody.appendChild(tr);
+
+                // Auto Pagination on Overflow
+                if (currentPage.contentDiv.scrollHeight > currentPage.contentDiv.clientHeight) {
+                    tbody.removeChild(tr); // Remove from filled page
+                    
+                    pageNum++;
+                    currentPage = createPage(pageNum);
+                    preview.appendChild(currentPage.dom);
+                    
+                    table = createTable(pageNum, headerData);
+                    tbody = table.querySelector('tbody');
+                    currentPage.tableWrap.appendChild(table);
+                    
+                    tbody.appendChild(tr); // Add to new page
+                }
+            }
+
+            // FOOTER
+            const totalTxt = document.getElementById('in_total').value;
+            const footerHtml = `<div class="p-footer"><div class="total-lbl">Total Cost:</div><div class="total-val">${totalTxt}</div></div>`;
+            const footerDiv = document.createElement('div');
+            footerDiv.innerHTML = footerHtml;
+            currentPage.contentDiv.appendChild(footerDiv);
+
+            if (currentPage.contentDiv.scrollHeight > currentPage.contentDiv.clientHeight) {
+                currentPage.contentDiv.removeChild(footerDiv);
+                pageNum++;
+                currentPage = createPage(pageNum);
+                preview.appendChild(currentPage.dom);
+                table = createTable(pageNum, headerData);
+                currentPage.tableWrap.appendChild(table);
+                const newF = document.createElement('div');
+                newF.innerHTML = footerHtml;
+                currentPage.contentDiv.appendChild(newF);
+            }
+        }
+
+        function createPage(num) {
+            const sheet = document.createElement('div');
+            sheet.className = 'sheet';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `sheet-content ${settings.border ? '' : 'noborder'}`;
+            sheet.appendChild(contentDiv);
+
+            if (num === 1) {
+                // PAGE 1 HEADER
+                const imageSrc = productImage ? productImage : ''; // Image source or empty
+                
+                contentDiv.innerHTML = `
+                    <div class="p-header">
+                        <div class="ph-logo"><img src="https://i.postimg.cc/G2Lj0VGY/Chat-GPT-Image-Jan-1-2026-01-32-19-PM.png"></div>
+                        <div class="ph-text"><h1>UK WATER SOLUTION</h1></div>
+                        <div class="ph-contact">Cell: ${document.getElementById('in_cell').value}</div>
+                    </div>
+                    <div class="p-shop-addr">${document.getElementById('in_shop').value}</div>
+                    
+                    <div class="info-grid">
+                        <div class="ig-left">
+                            <div class="addr-box"><div class="addr-label">From</div><div class="addr-content"><strong>${document.getElementById('in_from_name').value}</strong>${document.getElementById('in_from_addr').value.replace(/\n/g,'<br>')}</div></div>
+                            <div class="addr-box"><div class="addr-label">To</div><div class="addr-content"><strong>${document.getElementById('in_to_name').value}</strong>${document.getElementById('in_to_addr').value.replace(/\n/g,'<br>')}</div></div>
+                        </div>
+                        <div class="ig-right">
+                            <div class="img-container">
+                                ${imageSrc ? `<img src="${imageSrc}">` : ''}
+                            </div>
+                            <div class="kit-name">${document.getElementById('in_kit').value}</div>
+                        </div>
+                    </div>`;
+            } else {
+                contentDiv.innerHTML = `<div style="height:20px"></div>`;
+            }
+
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'table-wrapper';
+            contentDiv.appendChild(tableWrap);
+
+            return { dom: sheet, contentDiv: contentDiv, tableWrap: tableWrap };
+        }
+
+        function createTable(pageNum, headerData) {
+            const tbl = document.createElement('table');
+            tbl.className = `p-table ${settings.grid ? 'boxed' : 'clean'}`;
+            let content = headerData.colGroup;
+            if (pageNum === 1) content += headerData.html; // Only Header on Page 1
+            content += '<tbody></tbody>';
+            tbl.innerHTML = content;
+            return tbl;
+        }
+
+        // --- IMAGES & FILES ---
+        function handleImage(e) {
+            const f = e.target.files[0];
+            if(f) {
+                const r = new FileReader();
+                r.onload = (ev) => { productImage = ev.target.result; render(); };
+                r.readAsDataURL(f);
+            }
+        }
+        function clearImage() { productImage = ""; document.getElementById('in_img').value = ""; render(); }
+
+        function saveProject() {
+            const data = {
+                header: { cell: document.getElementById('in_cell').value, shop: document.getElementById('in_shop').value },
+                addr: { 
+                    fname: document.getElementById('in_from_name').value, faddr: document.getElementById('in_from_addr').value,
+                    tname: document.getElementById('in_to_name').value, taddr: document.getElementById('in_to_addr').value
+                },
+                kit: document.getElementById('in_kit').value,
+                total: document.getElementById('in_total').value,
+                items: items,
+                settings: settings,
+                imgSrc: productImage
+            };
+            const blob = new Blob([JSON.stringify(data)],{type:'application/json'});
+            const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='quotation_project.json'; a.click();
+        }
+
+        function loadProject(input) {
+            const f = input.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (e) => {
+                try {
+                    const d = JSON.parse(e.target.result);
+                    document.getElementById('in_cell').value = d.header.cell;
+                    document.getElementById('in_shop').value = d.header.shop;
+                    document.getElementById('in_from_name').value = d.addr.fname;
+                    document.getElementById('in_from_addr').value = d.addr.faddr;
+                    document.getElementById('in_to_name').value = d.addr.tname;
+                    document.getElementById('in_to_addr').value = d.addr.taddr;
+                    document.getElementById('in_kit').value = d.kit;
+                    document.getElementById('in_total').value = d.total;
+                    items = d.items;
+                    settings = d.settings || settings;
+                    productImage = d.imgSrc || "";
+
+                    document.getElementById('opt_border').checked = settings.border;
+                    document.getElementById('opt_grid').checked = settings.grid;
+                    document.getElementById('opt_show_sno').checked = settings.showSNo;
+                    document.getElementById('opt_show_desc').checked = settings.showDesc;
+                    document.getElementById('opt_show_qty').checked = settings.showQty;
+
+                    renderEditor(); render();
+                } catch(err) { alert("Error loading file."); }
+            };
+            r.readAsText(f); input.value = '';
+        }
+
+        async function downloadPDF() {
+            const sheets = document.querySelectorAll('.sheet');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'pt', 'a4'); 
+            const btn = document.querySelector('.btn-primary');
+            const oldText = btn.innerText;
+            btn.innerText = 'Generating PDF...';
+
+            for(let i=0; i<sheets.length; i++) {
+                if(i > 0) pdf.addPage();
+                const canvas = await html2canvas(sheets[i], { scale: 2, useCORS: true, logging: false });
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                pdf.addImage(imgData, 'JPEG', 0, 0, 595.28, 841.89);
+            }
+            pdf.save('Quotation.pdf');
+            btn.innerText = oldText;
+        }
+    </script>
+</body>
+</html>
