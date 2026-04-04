@@ -178,7 +178,6 @@
         
         .bill-top { display: flex; justify-content: space-between; font-size: 8pt; padding: 4px 8px; font-weight: bold; border-bottom: 1px solid #000; line-height: 1.2; }
         
-        /* FIX: Greatly increased Logo Size and vertically centered it */
         .bill-header { text-align: center; position: relative; padding: 20px 0 15px 0; border-bottom: 1px solid #000; min-height: 120px; }
         .bill-logo { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); width: 165px; height: 105px; object-fit: contain; }
         
@@ -282,22 +281,22 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                     <div>
                         <span class="input-hint">Cell Number</span>
-                        <input id="in_cell" value="9790552020, 9994331345" oninput="render()" style="margin:0;">
+                        <input id="in_cell" value="9003730161" oninput="render()" style="margin:0;">
                     </div>
                     <div>
                         <span class="input-hint">Company GSTIN</span>
-                        <input id="in_comp_gstin" value="33CQEPS6314Q1ZQ" oninput="render()" style="margin:0;" placeholder="For Tax Invoice">
+                        <input id="in_comp_gstin" value="33AEOPU2997Q1Z9" oninput="render()" style="margin:0;" placeholder="For Tax Invoice">
                     </div>
                 </div>
                 <span class="input-hint">Shop Address</span>
-                <textarea id="in_shop" rows="2" oninput="render()">4/141-1 MAHATMA GANDHI NAGAR&#13;&#10;SALEM ROAD&#13;&#10;NAMAKKAL</textarea>
+                <textarea id="in_shop" rows="2" oninput="render()">SHOP NO.173A7,NEAR OLD BUS STAND&#13;&#10;MAIN ROAD. NAMAKKAL - 637001</textarea>
             </div>
 
             <span class="section-label">Addresses</span>
             <div class="panel-card">
                 <span class="input-hint">FROM (Company Name & Addr)</span>
-                <input id="in_from_name" value="AQUA CARE RO SYSTEM" oninput="render()" placeholder="Company Name">
-                <textarea id="in_from_addr" rows="2" oninput="render()" placeholder="Sender Address">Shop No. 173A7, Near Old Bus Stand&#13;&#10;Main Road, Namakkal-637001</textarea>
+                <input id="in_from_name" value="UK WATER SOLUTIONS" oninput="render()" placeholder="Company Name">
+                <textarea id="in_from_addr" rows="2" oninput="render()" placeholder="Sender Address">SHOP NO.173A7,NEAR OLD BUS STAND&#13;&#10;MAIN ROAD. NAMAKKAL - 637001</textarea>
                 
                 <div style="height:1px; background:#e2e8f0; margin:10px 0;"></div>
 
@@ -382,7 +381,7 @@
                     </div>
                     <div>
                         <span class="input-hint">Date</span>
-                        <input id="in_bill_date" type="date" value="2026-01-31" oninput="render()" style="margin:0;">
+                        <input id="in_bill_date" type="date" value="2026-04-04" oninput="render()" style="margin:0;">
                     </div>
                 </div>
                 
@@ -393,6 +392,26 @@
                         <span class="material-icons-round">add_shopping_cart</span> Add Bill Item
                     </button>
                 </div>
+                
+                <span class="section-label">Bank Details (Invoice)</span>
+                <div class="panel-card">
+                    <span class="input-hint">A/C Name</span>
+                    <input id="in_bank_ac_name" value="UK WATER SOLUTIONS" oninput="render()">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div><span class="input-hint">Bank Name</span><input id="in_bank_name" value="TAMILNAD MERCANTILE BANK" oninput="render()" style="margin:0"></div>
+                        <div><span class="input-hint">A/C No</span><input id="in_bank_ac_no" value="129150050801558" oninput="render()" style="margin:0"></div>
+                        <div><span class="input-hint">IFSC Code</span><input id="in_bank_ifsc" value="TMBL0000129" oninput="render()" style="margin:0"></div>
+                        <div><span class="input-hint">Branch</span><input id="in_bank_branch" value="NAMAKKAL" oninput="render()" style="margin:0"></div>
+                    </div>
+                </div>
+
+                <span class="section-label">Terms & Conditions</span>
+                <div class="panel-card">
+                    <textarea id="in_terms" rows="4" oninput="render()">1. Goods Once supplied will not be taken back.
+2. Disputes under the bill are subjected to the Namakkal jurisdiction only.
+3. Interest@24%per annum will be charged extra,if payment is not received by us on duedate.</textarea>
+                </div>
+
             </div>
 
         </div>
@@ -688,6 +707,14 @@
             const roundGrandTotal = Math.round(grandTotal);
 
             const cellNumbers = document.getElementById('in_cell').value.split(',').map(n => n.trim()).join('<br>');
+            
+            // Gather Bank & Terms data
+            const termsText = document.getElementById('in_terms').value.replace(/\n/g, '<br>');
+            const bankAcName = document.getElementById('in_bank_ac_name').value;
+            const bankName = document.getElementById('in_bank_name').value;
+            const bankAcNo = document.getElementById('in_bank_ac_no').value;
+            const bankIfsc = document.getElementById('in_bank_ifsc').value;
+            const bankBranch = document.getElementById('in_bank_branch').value;
 
             sheet.innerHTML = `
                 <div class="bill-doc">
@@ -779,19 +806,17 @@
                             <div class="bill-terms">
                                 <div class="terms-list">
                                     <div style="text-decoration:underline; margin-bottom:2px;">Terms and Conditions:</div>
-                                    1.Goods Once supplied will not be taken back.<br>
-                                    2.Disputes under the bill are subjected to the Namakkal jurisdiction only.<br>
-                                    3.Interest@24%per annum will be charged extra,if payment is not received by us on duedate.
+                                    ${termsText}
                                 </div>
                                 
                                 <div class="bank-box">
                                     <div style="text-decoration:underline; margin-bottom:4px;">Bank Details:</div>
                                     <table style="width:100%; border:none; font-size:8pt; font-weight:bold; border-collapse: collapse;">
-                                        <tr><td style="width:75px; padding:1px 0;">NAME</td><td style="width:12px; padding:1px 0;">:</td><td style="padding:1px 0;">${compName}</td></tr>
-                                        <tr><td style="padding:1px 0;">BANK</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">DBS BANK INDIA LIMITED</td></tr>
-                                        <tr><td style="padding:1px 0;">A/C NO</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">0488360000009462</td></tr>
-                                        <tr><td style="padding:1px 0;">IFSC CODE</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">DBSS0IN0488</td></tr>
-                                        <tr><td style="padding:1px 0;">BRANCH</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">NAMAKKAL</td></tr>
+                                        <tr><td style="width:75px; padding:1px 0;">NAME</td><td style="width:12px; padding:1px 0;">:</td><td style="padding:1px 0;">${bankAcName}</td></tr>
+                                        <tr><td style="padding:1px 0;">BANK</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">${bankName}</td></tr>
+                                        <tr><td style="padding:1px 0;">A/C NO</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">${bankAcNo}</td></tr>
+                                        <tr><td style="padding:1px 0;">IFSC CODE</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">${bankIfsc}</td></tr>
+                                        <tr><td style="padding:1px 0;">BRANCH</td><td style="padding:1px 0;">:</td><td style="padding:1px 0;">${bankBranch}</td></tr>
                                     </table>
                                 </div>
                             </div>
@@ -882,7 +907,13 @@
                 billData: { 
                     billNo: document.getElementById('in_bill_no').value, 
                     billDate: document.getElementById('in_bill_date').value, 
-                    items: billItems 
+                    items: billItems,
+                    bankAcName: document.getElementById('in_bank_ac_name').value,
+                    bankName: document.getElementById('in_bank_name').value,
+                    bankAcNo: document.getElementById('in_bank_ac_no').value,
+                    bankIfsc: document.getElementById('in_bank_ifsc').value,
+                    bankBranch: document.getElementById('in_bank_branch').value,
+                    terms: document.getElementById('in_terms').value
                 }
             };
             const blob = new Blob([JSON.stringify(data)],{type:'application/json'});
@@ -921,6 +952,15 @@
                         document.getElementById('in_bill_no').value = d.billData.billNo || "";
                         document.getElementById('in_bill_date').value = d.billData.billDate || "";
                         billItems = d.billData.items || billItems;
+                        
+                        if(d.billData.bankName !== undefined) {
+                            document.getElementById('in_bank_ac_name').value = d.billData.bankAcName || "";
+                            document.getElementById('in_bank_name').value = d.billData.bankName || "";
+                            document.getElementById('in_bank_ac_no').value = d.billData.bankAcNo || "";
+                            document.getElementById('in_bank_ifsc').value = d.billData.bankIfsc || "";
+                            document.getElementById('in_bank_branch').value = d.billData.bankBranch || "";
+                            document.getElementById('in_terms').value = d.billData.terms || "";
+                        }
                     }
 
                     document.getElementById('opt_border').checked = settings.border;
