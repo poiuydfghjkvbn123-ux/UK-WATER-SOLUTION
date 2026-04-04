@@ -439,12 +439,12 @@
 
         // Bill Items Data (Matching exact image provided previously)
         let billItems = [ 
-            { desc: "PUMP 300GPD", hsn: "842121", qty: 2, rate: 6000, tax: 18 }, 
-            { desc: "SMPS 48V 3AMP", hsn: "842121", qty: 2, rate: 1200, tax: 18 },
-            { desc: "SV48VOLT", hsn: "8421", qty: 2, rate: 800, tax: 18 },
-            { desc: "50 LPH L BOW1/4", hsn: "8421", qty: 8, rate: 100, tax: 18 },
-            { desc: "***UAC CARBON 20*******", hsn: "8421", qty: 1, rate: 1200, tax: 18 },
-            { desc: "*SPUN FILTER 20***", hsn: "8421", qty: 1, rate: 600, tax: 18 }
+            { desc: "PUMP 300GPD", hsn: "842121", qty: "2", rate: "6000", tax: "18" }, 
+            { desc: "SMPS 48V 3AMP", hsn: "842121", qty: "2", rate: "1200", tax: "18" },
+            { desc: "SV48VOLT", hsn: "8421", qty: "2", rate: "800", tax: "18" },
+            { desc: "50 LPH L BOW1/4", hsn: "8421", qty: "8", rate: "100", tax: "18" },
+            { desc: "***UAC CARBON 20*******", hsn: "8421", qty: "1", rate: "1200", tax: "18" },
+            { desc: "*SPUN FILTER 20***", hsn: "8421", qty: "1", rate: "600", tax: "18" }
         ];
 
         window.onload = () => { 
@@ -566,8 +566,15 @@
         function addPageBreak(){ items.push({type:'break'}); renderEditor(); render(); }
         
         // Bill Edit Functions
-        function uBill(i, k, v) { billItems[i][k] = (k === 'desc' || k === 'hsn') ? v : parseFloat(v) || 0; render(); }
-        function addBillItem() { billItems.push({desc:'', hsn:'842121', qty:1, rate:0, tax:18}); renderEditor(); render(); }
+        function uBill(i, k, v) { 
+            billItems[i][k] = v; // Safely store as string to allow completely empty inputs
+            render(); 
+        }
+        function addBillItem() { 
+            billItems.push({desc:'', hsn:'', qty:'', rate:'', tax:'18'}); // Push true empty strings
+            renderEditor(); 
+            render(); 
+        }
         function delBillItem(i) { billItems.splice(i,1); renderEditor(); render(); }
 
         // --- MATH UTILS ---
@@ -664,11 +671,11 @@
         function renderBill(preview) {
             const sheet = document.createElement('div'); sheet.className = 'sheet';
             
-            const fmt = (num) => Number(num).toFixed(2);
+            const fmt = (num) => Number(num || 0).toFixed(2);
             
             let tableRowsHtml = '';
             let sumQty = 0; let sumTaxable = 0; let totalCgstAmt = 0; let totalSgstAmt = 0; let grandTotal = 0;
-            let primaryTaxRate = billItems.length > 0 ? billItems[0].tax : 18; 
+            let primaryTaxRate = billItems.length > 0 ? (parseFloat(billItems[0].tax) || 18) : 18; 
 
             const MIN_ROWS = 14; 
             const rowsToDraw = Math.max(MIN_ROWS, billItems.length);
@@ -676,24 +683,40 @@
             for (let i = 0; i < rowsToDraw; i++) {
                 if (i < billItems.length) {
                     const item = billItems[i];
-                    const amount = item.qty * item.rate;
-                    const taxAmt = amount * (item.tax / 100);
+                    
+                    // Parse values safely to handle empty string inputs beautifully without forcing a 0
+                    const qtyNum = parseFloat(item.qty) || 0;
+                    const rateNum = parseFloat(item.rate) || 0;
+                    const taxNum = parseFloat(item.tax) || 0;
+                    
+                    const amount = qtyNum * rateNum;
+                    const taxAmt = amount * (taxNum / 100);
                     const rowTotal = amount + taxAmt;
                     
-                    sumQty += item.qty; sumTaxable += amount;
+                    sumQty += qtyNum; 
+                    sumTaxable += amount;
                     totalCgstAmt += (taxAmt / 2); totalSgstAmt += (taxAmt / 2);
                     grandTotal += rowTotal;
                     
+                    // Only display calculations if the user has actually inputted valid numeric data for both Qty and Rate
+                    const isValidMathRow = (qtyNum > 0 && rateNum > 0);
+
+                    const dispQty = (item.qty && item.qty !== '0') ? `${item.qty} Nos` : '';
+                    const dispRate = (item.rate && item.rate !== '0') ? fmt(rateNum) : '';
+                    const dispAmt = isValidMathRow ? fmt(amount) : '';
+                    const dispTax = isValidMathRow ? taxNum : '';
+                    const dispRowTotal = isValidMathRow ? fmt(rowTotal) : '';
+
                     tableRowsHtml += `
                         <tr>
                             <td class="text-center">${i+1}</td>
-                            <td class="text-left">${item.desc.replace(/\n/g, '<br>')}</td>
-                            <td class="text-center">${item.hsn}</td>
-                            <td class="text-center">${item.qty} Nos</td>
-                            <td class="text-right">${fmt(item.rate)}</td>
-                            <td class="text-right">${fmt(amount)}</td>
-                            <td class="text-center">${item.tax}</td>
-                            <td class="text-right">${fmt(rowTotal)}</td>
+                            <td class="text-left">${(item.desc || '').replace(/\n/g, '<br>')}</td>
+                            <td class="text-center">${item.hsn || ''}</td>
+                            <td class="text-center">${dispQty}</td>
+                            <td class="text-right">${dispRate}</td>
+                            <td class="text-right">${dispAmt}</td>
+                            <td class="text-center">${dispTax}</td>
+                            <td class="text-right">${dispRowTotal}</td>
                         </tr>
                     `;
                 } else {
@@ -762,11 +785,11 @@
                                     ${tableRowsHtml}
                                     <tr class="bill-subtotal">
                                         <td colspan="3" class="text-left" style="padding-left: 15px;">Total</td>
-                                        <td class="text-center">${Number(sumQty).toFixed(3)}</td>
+                                        <td class="text-center">${sumQty > 0 ? Number(sumQty).toFixed(3) : ''}</td>
                                         <td></td>
-                                        <td class="text-right">${fmt(sumTaxable)}</td>
+                                        <td class="text-right">${sumTaxable > 0 ? fmt(sumTaxable) : ''}</td>
                                         <td></td>
-                                        <td class="text-right">${fmt(grandTotal)}</td>
+                                        <td class="text-right">${grandTotal > 0 ? fmt(grandTotal) : ''}</td>
                                     </tr>
                                 </tbody>
                             </table>
